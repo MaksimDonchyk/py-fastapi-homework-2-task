@@ -1,6 +1,6 @@
-from datetime import date
-from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field
+from datetime import date, timedelta
+from typing import Optional, Literal
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.functional_serializers import PlainSerializer
 from typing_extensions import Annotated
 
@@ -8,6 +8,8 @@ CustomDate = Annotated[
     Optional[date | str],
     PlainSerializer(lambda v: v.isoformat() if isinstance(v, date) else v, return_type=Optional[str])
 ]
+
+MovieStatus = Literal["Released", "Post Production", "In Production"]
 
 
 class CountrySchema(BaseModel):
@@ -82,13 +84,21 @@ class MovieCreateSchema(BaseModel):
     date: date
     score: float = Field(..., ge=0, le=100)
     overview: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[MovieStatus] = None
     budget: float = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
-    country: str
+    country: str = Field(..., pattern=r"^[A-Z]{2,3}$")
     genres: list[str] = []
     actors: list[str] = []
     languages: list[str] = []
+
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, v: date) -> date:
+        max_allowed_date = date.today() + timedelta(days=365)
+        if v > max_allowed_date:
+            raise ValueError("The release date cannot be more than one year in the future.")
+        return v
 
 
 class MovieUpdateSchema(BaseModel):
@@ -96,6 +106,16 @@ class MovieUpdateSchema(BaseModel):
     date: Optional[date] = None
     score: Optional[float] = Field(None, ge=0, le=100)
     overview: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[MovieStatus] = None
     budget: Optional[float] = Field(None, ge=0)
     revenue: Optional[float] = Field(None, ge=0)
+    country: Optional[str] = Field(None, pattern=r"^[A-Z]{2,3}$")
+
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, v: Optional[date]) -> Optional[date]:
+        if v is not None:
+            max_allowed_date = date.today() + timedelta(days=365)
+            if v > max_allowed_date:
+                raise ValueError("The release date cannot be more than one year in the future.")
+        return v
