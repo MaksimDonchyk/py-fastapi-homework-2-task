@@ -87,7 +87,8 @@ class MovieCreateSchema(BaseModel):
     status: Optional[MovieStatus] = None
     budget: float = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
-    country: str = Field(..., pattern=r"^[A-Z]{2,3}$")
+    # Строгий формат ISO 3166-1 alpha-3 (рівно 3 великі літери)
+    country: str = Field(..., pattern=r"^[A-Z]{3}$")
     genres: list[str] = []
     actors: list[str] = []
     languages: list[str] = []
@@ -109,7 +110,8 @@ class MovieUpdateSchema(BaseModel):
     status: Optional[MovieStatus] = None
     budget: Optional[float] = Field(None, ge=0)
     revenue: Optional[float] = Field(None, ge=0)
-    country: Optional[str] = Field(None, pattern=r"^[A-Z]{2,3}$")
+    # Строгий формат ISO 3166-1 alpha-3 для оновлення
+    country: Optional[str] = Field(None, pattern=r"^[A-Z]{3}$")
 
     @field_validator("date")
     @classmethod
